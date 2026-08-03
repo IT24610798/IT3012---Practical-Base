@@ -40,7 +40,7 @@ class VisualGridHuntGame:
         while len(self.toxic_traps) < 6:
             tx = random.randint(0, self.width - 1)
             ty = random.randint(0, self.height -1)
-            t_pos = [tx , ty]
+            t_pos = (tx , ty)
 
             if(
                 t_pos != (0 , 0)
