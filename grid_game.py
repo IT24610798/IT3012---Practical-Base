@@ -10,9 +10,9 @@ class GridHuntGame:
         self.height = height
         self.agent_pos = [0, 0]  # Starting position (x, y)
 
-        # Place a few random food pellets and obstacles (walls)
-        self.food_positions = {[1, 2], [2, 3], [3, 0], [2, 1]}
-        self.walls = {[1, 1], [2, 2]}
+        # Place a few food pellets and obstacles (walls)
+        self.food_positions = {(1, 2), (2, 3), (3, 0), (2, 1)}
+        self.walls = {(1, 1), (2, 2)}
 
         self.score = 0
         self.steps = 0

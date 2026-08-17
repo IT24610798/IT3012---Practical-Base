@@ -14,7 +14,7 @@ class VisualGridHuntGame:
         self.facing = 'Up'  # Initial facing direction
 
         if custom_walls is not None:
-            self.walls = set(custom_walls)
+            self.walls = {tuple(wall) for wall in custom_walls}
         else:
             # Generate some default scattered walls for a larger grid
             self.walls = {(2, 2), (2, 3), (5, 5), (6, 5), (3, 7)}
@@ -41,11 +41,11 @@ class VisualGridHuntGame:
         self.toxic_traps = set()
         while len(self.toxic_traps) < 6:
             tx = random.randint(0, self.width - 1)
-            ty = random.randint(0, self.height -1)
-            t_pos = [tx , ty]
+            ty = random.randint(0, self.height - 1)
+            t_pos = (tx, ty)
 
-            if(
-                t_pos != (0 , 0)
+            if (
+                t_pos != (0, 0)
                 and t_pos not in self.walls
                 and t_pos not in self.food_positions
             ):
@@ -197,11 +197,15 @@ class GridGameGUI:
         canvas_w = self.env.width * self.cell_size
         canvas_h = self.env.height * self.cell_size
 
-        self.canvas = tk.Canvas(root, width=canvas_w, height=canvas_h, bg="white")
+        self.board_frame = tk.LabelFrame(root, text="Game Grid", padx=10, pady=10, font=("Arial", 12, "bold"))
+        self.board_frame.pack(padx=12, pady=(12, 6))
+
+        self.canvas = tk.Canvas(self.board_frame, width=canvas_w, height=canvas_h, bg="white",
+                               highlightthickness=1, highlightbackground="#94a3b8")
         self.canvas.pack()
 
         self.label = tk.Label(root, text="Score: 0 | Steps: 0", font=("Arial", 14))
-        self.label.pack(pady=10)
+        self.label.pack(pady=(6, 8))
 
         self.btn = tk.Button(root, text="Start Simulation", command=self.run_loop, font=("Arial", 12), bg="#000066",
                              fg="white")
@@ -220,7 +224,7 @@ class GridGameGUI:
                 y2 = y1 + self.cell_size
 
                 color = "#f1f5f9" if (x, y) not in self.env.walls else "#64748b"
-                self.canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="#cbd5e1")
+                self.canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="#94a3b8", width=1)
 
                 # Only draw text if cell is large enough
                 if self.cell_size >= 40 and (x, y) in self.env.walls:
