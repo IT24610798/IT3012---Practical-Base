@@ -1,6 +1,7 @@
 # visual_grid_game.py
 import random
 import tkinter as tk
+from agent import SearchAgent
 
 FACINGS = ['Up', 'Down', 'Left', 'Right'] # clockwise order.
 
@@ -78,6 +79,11 @@ class VisualGridHuntGame:
             'collision': self.collision,
             'score': self.score,
             'remaining_food': len(self.food_positions),
+            'grid_size': (self.width, self.height),
+            'walls': list(self.walls),
+            'all_food': list(self.food_positions),
+            'agent_pos': tuple(self.agent_pos),
+            'facing': self.facing,
         }
 
     def execute_action(self, action: str):
@@ -187,6 +193,8 @@ class GridGameGUI:
 
         if agent_type == 'model':
             self.agent = ModelBasedAgent()
+        elif agent_type == 'search':
+            self.agent = SearchAgent()
         else:
             self.agent = SimpleReflexAgent()
 
@@ -287,5 +295,5 @@ class GridGameGUI:
 if __name__ == "__main__":
     root = tk.Tk()
     # Try a larger grid size like 12x12 with 15 food and 3 opponents!
-    app = GridGameGUI(root, width=12, height=12, num_food=15, num_opponents=0, agent_type='simple')
+    app = GridGameGUI(root, width=12, height=12, num_food=15, num_opponents=0, agent_type='search')
     root.mainloop()
