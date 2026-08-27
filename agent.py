@@ -1,12 +1,10 @@
-# agent.py
 import random
+import math
 import heapq
 from collections import deque
 
 
 class GreedyGridAgent:
-    """A simple agent that tries to move around systematically to clear the grid."""
-
     def __init__(self):
         self.actions_pool = ['Up', 'Down', 'Left', 'Right']
 
@@ -37,8 +35,6 @@ class GreedyGridAgent:
 
 
 class SimpleReflexAgent:
-    """Very small reactive agent: avoid walls, otherwise keep moving."""
-
     def __init__(self):
         self.last_action = None
 
@@ -54,8 +50,6 @@ class SimpleReflexAgent:
 
 
 class ModelBasedAgent:
-    """A minimal stateful agent that changes action when the same percept repeats."""
-
     def __init__(self):
         self.last_action = None
         self.last_percept = None
@@ -75,9 +69,8 @@ class ModelBasedAgent:
         self.last_percept = percept
         return action
 
+
 class SearchAgent:
-    """Goal-based planning agent: simulates the world offline using BFS, DFS, or UCS
-    before committing to any physical action."""
 
     FACINGS = ['Up', 'Down', 'Left', 'Right']
 
@@ -163,6 +156,50 @@ class SearchAgent:
 
         return None
 
+    def manhattan_distance(self, pos, goal):
+        x1, y1 = pos
+        x2, y2 = goal
+        return abs(x1 - x2) + abs(y1 - y2)
+
+    def euclidean_distance(self, pos, goal):
+        x1, y1 = pos
+        x2, y2 = goal
+        return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+    def astar_search(self, start_pos, goal_pos, walls, grid_size, heuristic_type='manhattan'):
+        start, goal = tuple(start_pos), tuple(goal_pos)
+        walls = set(tuple(w) for w in walls)
+        if start == goal:
+            return []
+
+        heuristic = self.manhattan_distance if heuristic_type == 'manhattan' else self.euclidean_distance
+
+        counter = 0
+        h_start = heuristic(start, goal)
+        frontier = [(h_start, 0, counter, start, [])]
+        reached_states = set()
+
+        while frontier:
+            f_cost, g_cost, _, current, path = heapq.heappop(frontier)
+
+            if current == goal:
+                return path
+
+            if current in reached_states:
+                continue
+            reached_states.add(current)
+
+            for action, next_pos, step_cost in self.get_successors(current, walls, grid_size):
+                if next_pos in reached_states:
+                    continue
+                g_new = g_cost + step_cost
+                h_new = heuristic(next_pos, goal)
+                f_new = g_new + h_new
+                counter += 1
+                heapq.heappush(frontier, (f_new, g_new, counter, next_pos, path + [action]))
+
+        return None
+
     def closest_food(self, start, food_list):
         return min(food_list, key=lambda f: abs(f[0] - start[0]) + abs(f[1] - start[1]))
 
@@ -188,6 +225,8 @@ class SearchAgent:
                 result = self.dfs_search(start, goal, walls, grid_size)
             elif self.active_algo == 'UCS':
                 result = self.ucs_search(start, goal, walls, grid_size)
+            elif self.active_algo == 'AStar':
+                result = self.astar_search(start, goal, walls, grid_size, heuristic_type='manhattan')
             else:
                 result = None
 
@@ -207,3 +246,10 @@ class SearchAgent:
             return 'turn_right'
         else:
             return 'turn_left'
+
+
+if __name__ == "__main__":
+    agent = SearchAgent()
+    start, goal = (0, 0), (3, 4)
+    print("Manhattan:", agent.manhattan_distance(start, goal))
+    print("Euclidean:", agent.euclidean_distance(start, goal))
