@@ -3,6 +3,8 @@ import math
 import heapq
 from collections import deque
 
+from logic_engine import KnowledgeBase
+
 
 class GreedyGridAgent:
     def __init__(self):
@@ -77,6 +79,9 @@ class SearchAgent:
     def __init__(self):
         self.plan = []
         self.active_algo = 'BFS'
+        self.kb = KnowledgeBase()
+        self.kb.tell_rule(['TargetVisible', 'HasDust'], 'SafeToEngage')
+        self.kb.tell_rule(['SafeToEngage', 'BloodseekerMissing'], 'Retreat')
 
     def get_successors(self, pos, walls, grid_size):
         x, y = pos
@@ -166,7 +171,18 @@ class SearchAgent:
         x2, y2 = goal
         return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
-    def astar_search(self, start_pos, goal_pos, walls, grid_size, heuristic_type='manhattan'):
+    def is_feasible(self, tile, tile_facts):
+        self.kb.clear_facts()
+        for fact in tile_facts.get(tile, []):
+            self.kb.tell_fact(fact)
+        self.kb.forward_chain()
+        return 'Retreat' not in self.kb.facts
+
+    def astar_search(self, start_pos, goal_pos, walls, grid_size,
+                     heuristic_type='manhattan', tile_facts=None):
+        if tile_facts is None:
+            tile_facts = {}
+
         start, goal = tuple(start_pos), tuple(goal_pos)
         walls = set(tuple(w) for w in walls)
         if start == goal:
@@ -191,6 +207,8 @@ class SearchAgent:
 
             for action, next_pos, step_cost in self.get_successors(current, walls, grid_size):
                 if next_pos in reached_states:
+                    continue
+                if not self.is_feasible(next_pos, tile_facts):
                     continue
                 g_new = g_cost + step_cost
                 h_new = heuristic(next_pos, goal)
@@ -219,6 +237,11 @@ class SearchAgent:
             walls = percept['walls']
             grid_size = percept['grid_size']
 
+            tile_facts = {
+                (1, 0): ['TargetVisible', 'HasDust', 'BloodseekerMissing'],
+                (0, 1): ['TargetVisible', 'HasDust'],
+            }
+
             if self.active_algo == 'BFS':
                 result = self.bfs_search(start, goal, walls, grid_size)
             elif self.active_algo == 'DFS':
@@ -226,7 +249,9 @@ class SearchAgent:
             elif self.active_algo == 'UCS':
                 result = self.ucs_search(start, goal, walls, grid_size)
             elif self.active_algo == 'AStar':
-                result = self.astar_search(start, goal, walls, grid_size, heuristic_type='manhattan')
+                result = self.astar_search(start, goal, walls, grid_size,
+                                           heuristic_type='manhattan',
+                                           tile_facts=tile_facts)
             else:
                 result = None
 
